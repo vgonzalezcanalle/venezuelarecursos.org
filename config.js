@@ -15,7 +15,7 @@ const CONFIG = {
   //    e. Click Publish and copy the URL
   //    f. Paste it below
   // ----------------------------------------------------------
-  SHEET_CSV_URL: "Yhttps://docs.google.com/spreadsheets/d/e/2PACX-1vTMGZSewQVcxrzERzjxUfcv4XuCPG_u7gmygSBZ9jazXnu59iYXKcqG7D5Tafyufx0aMFxU7DcoMyMU/pub?gid=0&single=true&output=csv",
+  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTMGZSewQVcxrzERzjxUfcv4XuCPG_u7gmygSBZ9jazXnu59iYXKcqG7D5Tafyufx0aMFxU7DcoMyMU/pub?gid=0&single=true&output=csv",
 
   // ----------------------------------------------------------
   // 2. GOOGLE FORM (for resource submissions)
