@@ -28,7 +28,7 @@ const CONFIG = {
   //
   //    Also paste the plain shareable link for the fallback button.
   // ----------------------------------------------------------
-  FORM_EMBED_URL: "<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfMEOIWm93TL5zIHvxvcPNenijiuwI8dgMEgVnwVluTepnGAA/viewform?embedded=true" width="640" height="4147" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>",
+  FORM_EMBED_URL: "https://docs.google.com/forms/d/e/1FAIpQLSfMEOIWm93TL5zIHvxvcPNenijiuwI8dgMEgVnwVluTepnGAA/viewform?embedded=true",
   FORM_DIRECT_URL: "https://docs.google.com/forms/d/e/1FAIpQLSfMEOIWm93TL5zIHvxvcPNenijiuwI8dgMEgVnwVluTepnGAA/viewform?usp=dialog",
 
   // ----------------------------------------------------------
