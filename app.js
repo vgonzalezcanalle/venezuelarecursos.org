@@ -467,6 +467,7 @@ function renderContactLinks(contact) {
       else if (part.includes("t.me") || part.includes("telegram")) label = "Telegram";
       else if (part.includes("gofundme")) label = "GoFundMe";
       else if (part.includes("linktr.ee")) label = "Linktree";
+      else if (part.includes("website")) label = "Website";
       else if (part.includes("google.com/forms")) label = currentLang === "en" ? "Open Form" : "Abrir Formulario";
       else label = currentLang === "en" ? "Website" : "Sitio web";
       return `<a href="${escHtml(part)}" target="_blank" rel="noopener" class="contact-link">${label} ↗</a>`;
