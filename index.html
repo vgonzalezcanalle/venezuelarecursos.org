@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Venezuela Earthquake Resource Hub | Centro de Recursos</title>
+  <meta name="description" content="Find verified earthquake relief resources in Venezuela. Encuentra recursos verificados de ayuda tras el terremoto en Venezuela." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-inner container">
+      <a href="#" class="nav-logo" onclick="showPage('home')">
+        <span class="logo-flag">🇻🇪</span>
+        <span class="logo-text" data-en="Resource Hub" data-es="Centro de Recursos">Centro de Recursos</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
+        <a href="#" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
+        <a href="#" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
+      </nav>
+      <button class="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
+        <span class="lang-en">EN</span>
+        <span class="lang-divider">/</span>
+        <span class="lang-es">ES</span>
+      </button>
+      <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#" onclick="showPage('resources'); toggleMobileMenu()" data-en="Resources" data-es="Recursos">Recursos</a>
+      <a href="#" onclick="showPage('submit'); toggleMobileMenu()" data-en="Submit" data-es="Enviar">Enviar</a>
+      <a href="#" onclick="showPage('about'); toggleMobileMenu()" data-en="About" data-es="Acerca de">Acerca de</a>
+    </div>
+  </header>
+
+  <!-- HOME PAGE -->
+  <main id="page-home" class="page active">
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero-eyebrow" data-en="Earthquake Relief Directory" data-es="Directorio de Ayuda Post-Terremoto">Directorio de Ayuda Post-Terremoto</div>
+        <h1 class="hero-title">
+          <span data-en="Venezuela Earthquake" data-es="Terremoto en Venezuela">Terremoto en Venezuela</span><br/>
+          <span class="hero-title-accent" data-en="Resource Hub" data-es="Centro de Recursos">Centro de Recursos</span>
+        </h1>
+        <p class="hero-sub" data-en="We connect people affected by the earthquake with verified organizations, professionals, and volunteers providing assistance." data-es="Conectamos a las personas afectadas por el terremoto con organizaciones verificadas, profesionales y voluntarios que ofrecen ayuda.">Conectamos a las personas afectadas por el terremoto con organizaciones verificadas, profesionales y voluntarios que ofrecen ayuda.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="showPage('resources')" data-en="Find Resources" data-es="Buscar Recursos">Buscar Recursos</button>
+          <button class="btn btn-ghost" onclick="showPage('submit')" data-en="Submit a Resource" data-es="Agregar un Recurso">Agregar un Recurso</button>
+        </div>
+        <p class="hero-disclaimer" data-en="This is an informational directory. We do not provide emergency services. If you are in immediate danger, call emergency services." data-es="Este es un directorio informativo. No prestamos servicios de emergencia. Si está en peligro inmediato, llame a los servicios de emergencia.">Este es un directorio informativo. No prestamos servicios de emergencia. Si está en peligro inmediato, llame a los servicios de emergencia.</p>
+      </div>
+    </section>
+
+    <section class="categories-section container">
+      <h2 class="section-title" data-en="What do you need?" data-es="¿Qué necesitas?">¿Qué necesitas?</h2>
+      <div class="category-grid" id="categoryGrid">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <section class="help-section">
+      <div class="container">
+        <h2 class="section-title" data-en="Want to help?" data-es="¿Quieres ayudar?">¿Quieres ayudar?</h2>
+        <div class="help-cards">
+          <div class="help-card">
+            <div class="help-icon">💛</div>
+            <h3 data-en="Donate" data-es="Donar">Donar</h3>
+            <p data-en="Support verified organizations providing aid on the ground." data-es="Apoya a organizaciones verificadas que brindan ayuda en el terreno.">Apoya a organizaciones verificadas que brindan ayuda en el terreno.</p>
+            <button class="btn btn-sm" onclick="filterAndShow('Donations')" data-en="See donation resources" data-es="Ver recursos de donación">Ver recursos de donación</button>
+          </div>
+          <div class="help-card">
+            <div class="help-icon">🤝</div>
+            <h3 data-en="Volunteer" data-es="Voluntariado">Voluntariado</h3>
+            <p data-en="Offer your time or professional skills to those in need." data-es="Ofrece tu tiempo o habilidades profesionales a quienes lo necesitan.">Ofrece tu tiempo o habilidades profesionales a quienes lo necesitan.</p>
+            <button class="btn btn-sm" onclick="filterAndShow('Volunteer Opportunities')" data-en="See volunteer opportunities" data-es="Ver oportunidades de voluntariado">Ver oportunidades de voluntariado</button>
+          </div>
+          <div class="help-card">
+            <div class="help-icon">📋</div>
+            <h3 data-en="Add a Resource" data-es="Agregar un Recurso">Agregar un Recurso</h3>
+            <p data-en="Know of an organization helping affected communities? Share it here." data-es="¿Conoces una organización que ayuda a las comunidades afectadas? Compártela aquí.">¿Conoces una organización que ayuda a las comunidades afectadas? Compártela aquí.</p>
+            <button class="btn btn-sm" onclick="showPage('submit')" data-en="Submit a resource" data-es="Enviar un recurso">Enviar un recurso</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- RESOURCES PAGE -->
+  <main id="page-resources" class="page">
+    <div class="container">
+      <div class="page-header">
+        <h1 data-en="Resources" data-es="Recursos">Recursos</h1>
+        <p data-en="All resources are reviewed before being listed. Information may change — always confirm directly with the organization." data-es="Todos los recursos son revisados antes de ser publicados. La información puede cambiar — confirma siempre directamente con la organización.">Todos los recursos son revisados antes de ser publicados. La información puede cambiar — confirma siempre directamente con la organización.</p>
+      </div>
+
+      <div class="search-filter-bar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar recursos... / Search resources..." oninput="filterResources()" />
+        </div>
+        <select id="categoryFilter" onchange="filterResources()">
+          <option value="" data-en="All Categories" data-es="Todas las Categorías">Todas las Categorías</option>
+        </select>
+        <select id="locationFilter" onchange="filterResources()">
+          <option value="" data-en="All Locations" data-es="Todas las Ubicaciones">Todas las Ubicaciones</option>
+        </select>
+      </div>
+
+      <div id="resourcesStatus" class="resources-status">
+        <div class="loading-spinner"></div>
+        <span data-en="Loading resources..." data-es="Cargando recursos...">Cargando recursos...</span>
+      </div>
+
+      <div id="resourceGrid" class="resource-grid"></div>
+
+      <div id="noResults" class="no-results hidden">
+        <div class="no-results-icon">🔎</div>
+        <p data-en="No resources found. Try a different search or category." data-es="No se encontraron recursos. Intenta con otra búsqueda o categoría.">No se encontraron recursos. Intenta con otra búsqueda o categoría.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- SUBMIT PAGE -->
+  <main id="page-submit" class="page">
+    <div class="container container-narrow">
+      <div class="page-header">
+        <h1 data-en="Submit a Resource" data-es="Enviar un Recurso">Enviar un Recurso</h1>
+        <p data-en="Know of a verified organization helping those affected by the earthquake? Help us expand this directory." data-es="¿Conoces una organización verificada que esté ayudando a los afectados? Ayúdanos a ampliar este directorio.">¿Conoces una organización verificada que esté ayudando a los afectados? Ayúdanos a ampliar este directorio.</p>
+      </div>
+
+      <div class="submit-notice">
+        <span class="notice-icon">ℹ️</span>
+        <p data-en="All submissions are reviewed before publication. We prioritize verified organizations with confirmed contact information." data-es="Todos los envíos son revisados antes de su publicación. Priorizamos organizaciones verificadas con información de contacto confirmada.">Todos los envíos son revisados antes de su publicación. Priorizamos organizaciones verificadas con información de contacto confirmada.</p>
+      </div>
+
+      <!-- Replace this URL with your actual Google Form embed URL -->
+      <div class="form-container">
+        <div class="google-form-placeholder" id="formPlaceholder">
+          <div class="placeholder-inner">
+            <div class="placeholder-icon">📋</div>
+            <h3 data-en="Submission Form" data-es="Formulario de Envío">Formulario de Envío</h3>
+            <p data-en="Configure your Google Form URL in config.js to enable submissions." data-es="Configura la URL de tu Google Form en config.js para habilitar envíos.">Configura la URL de tu Google Form en config.js para habilitar envíos.</p>
+            <a href="#" class="btn btn-primary" id="formDirectLink" target="_blank" rel="noopener" data-en="Open Submission Form" data-es="Abrir Formulario de Envío">Abrir Formulario de Envío</a>
+          </div>
+        </div>
+        <iframe id="googleFormIframe" class="google-form-iframe hidden" frameborder="0" marginheight="0" marginwidth="0" title="Resource Submission Form"></iframe>
+      </div>
+
+      <div class="submit-guide">
+        <h3 data-en="What to include" data-es="Qué incluir">Qué incluir</h3>
+        <ul>
+          <li data-en="Organization name and contact details" data-es="Nombre de la organización y datos de contacto">Nombre de la organización y datos de contacto</li>
+          <li data-en="Description of services provided" data-es="Descripción de los servicios que ofrecen">Descripción de los servicios que ofrecen</li>
+          <li data-en="Who the service is intended for" data-es="A quién va dirigido el servicio">A quién va dirigido el servicio</li>
+          <li data-en="Whether it is free or paid" data-es="Si es gratuito o tiene costo">Si es gratuito o tiene costo</li>
+          <li data-en="How you verified this organization" data-es="Cómo verificaste esta organización">Cómo verificaste esta organización</li>
+        </ul>
+        <p class="guide-note" data-en="Verification sources include: official websites, government agencies, universities, hospitals, professional associations, verified social media, or news articles from reputable outlets." data-es="Las fuentes de verificación incluyen: sitios web oficiales, organismos gubernamentales, universidades, hospitales, colegios profesionales, redes sociales verificadas o artículos de medios confiables.">Las fuentes de verificación incluyen: sitios web oficiales, organismos gubernamentales, universidades, hospitales, colegios profesionales, redes sociales verificadas o artículos de medios confiables.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ABOUT PAGE -->
+  <main id="page-about" class="page">
+    <div class="container container-narrow">
+      <div class="page-header">
+        <h1 data-en="About This Project" data-es="Acerca de este Proyecto">Acerca de este Proyecto</h1>
+      </div>
+
+      <div class="about-content">
+        <section class="about-block">
+          <p data-en="The Venezuela Earthquake Resource Hub is an independent community initiative created to help individuals and families locate verified assistance following the earthquake." data-es="El Centro de Recursos del Terremoto de Venezuela es una iniciativa comunitaria e independiente creada para ayudar a las personas y familias a encontrar ayuda verificada después del terremoto.">El Centro de Recursos del Terremoto de Venezuela es una iniciativa comunitaria e independiente creada para ayudar a las personas y familias a encontrar ayuda verificada después del terremoto.</p>
+          <p data-en="Our goal is to centralize reliable information so people can quickly find organizations and professionals already providing support." data-es="Nuestro objetivo es centralizar información confiable para facilitar el acceso a organizaciones y profesionales que ya están brindando apoyo.">Nuestro objetivo es centralizar información confiable para facilitar el acceso a organizaciones y profesionales que ya están brindando apoyo.</p>
+        </section>
+
+        <section class="about-block">
+          <h2 data-en="Verification Process" data-es="Proceso de Verificación">Proceso de Verificación</h2>
+          <p data-en="Every submitted resource is reviewed before publication whenever possible. We verify information using:" data-es="Todos los recursos enviados son revisados antes de ser publicados, siempre que sea posible. Verificamos la información utilizando:">Todos los recursos enviados son revisados antes de ser publicados, siempre que sea posible. Verificamos la información utilizando:</p>
+          <ul class="about-list">
+            <li data-en="Official websites" data-es="Sitios web oficiales">Sitios web oficiales</li>
+            <li data-en="Direct communication" data-es="Comunicación directa">Comunicación directa</li>
+            <li data-en="Government agencies" data-es="Organismos gubernamentales">Organismos gubernamentales</li>
+            <li data-en="Universities and hospitals" data-es="Universidades y hospitales">Universidades y hospitales</li>
+            <li data-en="Professional associations" data-es="Colegios profesionales">Colegios profesionales</li>
+            <li data-en="Verified social media accounts" data-es="Cuentas verificadas en redes sociales">Cuentas verificadas en redes sociales</li>
+            <li data-en="Trusted nonprofit organizations" data-es="Organizaciones sin fines de lucro confiables">Organizaciones sin fines de lucro confiables</li>
+          </ul>
+          <p class="about-note" data-en="Information may change over time. Always confirm details directly with the organization." data-es="La información puede cambiar con el tiempo. Recomendamos confirmar los datos directamente con la organización correspondiente.">La información puede cambiar con el tiempo. Recomendamos confirmar los datos directamente con la organización correspondiente.</p>
+        </section>
+
+        <section class="about-block">
+          <h2 data-en="Disclaimer" data-es="Aviso Legal">Aviso Legal</h2>
+          <p data-en="This website is an independent informational directory. We are not affiliated with any government agency, emergency service, hospital, or organization listed unless explicitly stated." data-es="Este sitio web es un directorio informativo independiente. No estamos afiliados al Gobierno de Venezuela, servicios de emergencia, hospitales ni a las organizaciones aquí publicadas, salvo que se indique expressamente.">Este sitio web es un directorio informativo independiente. No estamos afiliados al Gobierno de Venezuela, servicios de emergencia, hospitales ni a las organizaciones aquí publicadas, salvo que se indique expressamente.</p>
+          <p data-en="We do not provide emergency assistance, medical advice, engineering evaluations, legal advice, or psychological counseling. If you are experiencing an emergency, contact your local emergency services immediately." data-es="No prestamos asistencia de emergencia ni ofrecemos asesoría médica, estructural, legal o psicológica. En caso de emergencia, comuníquese con los servicios de emergencia correspondientes.">No prestamos asistencia de emergencia ni ofrecemos asesoría médica, estructural, legal o psicológica. En caso de emergencia, comuníquese con los servicios de emergencia correspondientes.</p>
+        </section>
+
+        <section class="about-block">
+          <h2 data-en="Privacy" data-es="Privacidad">Privacidad</h2>
+          <p data-en="We collect only the information necessary to maintain this directory. Submitted resources are reviewed before publication. We do not sell personal information." data-es="Solo recopilamos la información necesaria para mantener este directorio. Todos los recursos enviados son revisados antes de su publicación. No vendemos información personal.">Solo recopilamos la información necesaria para mantener este directorio. Todos los recursos enviados son revisados antes de su publicación. No vendemos información personal.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- RESOURCE DETAIL MODAL -->
+  <div id="resourceModal" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <span class="logo-flag">🇻🇪</span>
+        <span data-en="Venezuela Earthquake Resource Hub" data-es="Centro de Recursos del Terremoto de Venezuela">Centro de Recursos del Terremoto de Venezuela</span>
+      </div>
+      <div class="footer-links">
+        <a href="#" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
+        <a href="#" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
+        <a href="#" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
+      </div>
+      <p class="footer-note" data-en="Independent community initiative. Not affiliated with any government or emergency service." data-es="Iniciativa comunitaria independiente. No afiliada a ningún gobierno o servicio de emergencia.">Iniciativa comunitaria independiente. No afiliada a ningún gobierno o servicio de emergencia.</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
