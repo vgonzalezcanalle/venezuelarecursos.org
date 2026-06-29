@@ -145,7 +145,7 @@ async function loadResources() {
     status.classList.remove("hidden");
     status.innerHTML = `<div class="loading-spinner"></div><span>${currentLang === "en" ? "Loading resources..." : "Cargando recursos..."}</span>`;
 
-    const res = await fetch(`${CONFIG.SHEET_CSV_URL}`);
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(CONFIG.SHEET_CSV_URL)}`);
     if (!res.ok) throw new Error("Network error");
     const csv = await res.text();
     allResources = parseCSV(csv);
@@ -357,6 +357,9 @@ function renderResources(resources) {
   noResults?.classList.add("hidden");
   status?.classList.add("hidden");
 
+  // Store filtered list globally so modal can look up by filtered index
+  window._currentFilteredResources = resources;
+
   grid.innerHTML = resources.map((r, idx) => {
     const name = currentLang === "en" ? (r["Resource Name"] || r["Nombre del Recurso"]) : (r["Nombre del Recurso"] || r["Resource Name"]);
     const desc = currentLang === "en" ? (r["Description"] || r["Descripción"]) : (r["Descripción"] || r["Description"]);
@@ -372,7 +375,7 @@ function renderResources(resources) {
     const shortDesc = desc.length > 120 ? desc.substring(0, 120) + "…" : desc;
 
     return `
-      <div class="resource-card" onclick="openModal(${idx})">
+      <div class="resource-card" onclick="openModal(${idx}, true)">
         <div class="card-header">
           <span class="card-category-icon">${catObj.icon}</span>
           <span class="card-category">${catLabel}</span>
@@ -406,8 +409,9 @@ function escHtml(str) {
 //  MODAL
 // ============================================================
 
-function openModal(idx) {
-  const r = allResources[idx];
+function openModal(idx, fromFiltered) {
+  const list = fromFiltered && window._currentFilteredResources ? window._currentFilteredResources : allResources;
+  const r = list[idx];
   if (!r) return;
 
   const name = currentLang === "en" ? (r["Resource Name"] || r["Nombre del Recurso"]) : (r["Nombre del Recurso"] || r["Resource Name"]);
@@ -455,21 +459,21 @@ function openModal(idx) {
 
 function renderContactLinks(contact) {
   if (!contact) return "";
-  // Split on " / " to get multiple contact items
   const parts = contact.split(" / ").map(p => p.trim()).filter(Boolean);
   return parts.map(part => {
     if (part.startsWith("http://") || part.startsWith("https://")) {
-      // Try to detect what kind of link it is
-      let label = currentLang === "en" ? "Open link" : "Abrir enlace";
+      let label = currentLang === "en" ? "Website" : "Sitio web";
       if (part.includes("instagram.com")) label = "Instagram";
       else if (part.includes("facebook.com")) label = "Facebook";
-      else if (part.includes("wa.me") || part.includes("whatsapp.com")) label = "WhatsApp";
-      else if (part.includes("t.me") || part.includes("telegram")) label = "Telegram";
-      else if (part.includes("gofundme")) label = "GoFundMe";
+      else if (part.includes("wa.me") || part.includes("whatsapp.com/channel") || part.includes("whatsapp.com")) label = "WhatsApp";
+      else if (part.includes("t.me") || part.includes("telegram.me") || part.includes("telegram.org")) label = "Telegram";
+      else if (part.includes("gofundme.com")) label = "GoFundMe";
       else if (part.includes("linktr.ee")) label = "Linktree";
-      else if (part.includes("website")) label = "Website";
-      else if (part.includes("google.com/forms")) label = currentLang === "en" ? "Open Form" : "Abrir Formulario";
-      else label = currentLang === "en" ? "Website" : "Sitio web";
+      else if (part.includes("google.com/forms") || part.includes("docs.google.com/forms")) label = currentLang === "en" ? "Open Form" : "Abrir Formulario";
+      else if (part.includes("twitter.com") || part.includes("x.com")) label = "X / Twitter";
+      else if (part.includes("youtube.com")) label = "YouTube";
+      else if (part.includes("tiktok.com")) label = "TikTok";
+      // Everything else is a website — already defaulted above
       return `<a href="${escHtml(part)}" target="_blank" rel="noopener" class="contact-link">${label} ↗</a>`;
     } else if (part.startsWith("IG:")) {
       const url = part.replace("IG:", "").trim();
