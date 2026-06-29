@@ -171,15 +171,38 @@ async function loadResources() {
     return;
   }
 
+  const PROXIES = [
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  ];
+
   try {
     status.classList.remove("hidden");
     status.innerHTML = `<div class="loading-spinner"></div><span>${currentLang === "en" ? "Loading resources..." : "Cargando recursos..."}</span>`;
 
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(CONFIG.SHEET_CSV_URL)}`);
-    if (!res.ok) throw new Error("Network error");
-    const csv = await res.text();
-    allResources = parseCSV(csv);
+    let csv = null;
+    let lastErr = null;
 
+    for (const proxyFn of PROXIES) {
+      try {
+        const res = await fetch(proxyFn(CONFIG.SHEET_CSV_URL));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        // Sanity check — valid CSV should contain our header
+        if (text.includes("Resource Name") || text.includes("Nombre del Recurso")) {
+          csv = text;
+          break;
+        }
+      } catch (e) {
+        lastErr = e;
+        console.warn("Proxy failed, trying next...", e);
+      }
+    }
+
+    if (!csv) throw lastErr || new Error("All proxies failed");
+
+    allResources = parseCSV(csv);
     status.classList.add("hidden");
     populateFilters();
     renderCategoryGrid();
