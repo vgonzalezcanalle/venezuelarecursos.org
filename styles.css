@@ -106,6 +106,10 @@ body {
   background: rgba(255,255,255,0.1);
   color: var(--white-pure);
 }
+.nav-links a.nav-active {
+  background: rgba(232,160,32,0.2);
+  color: var(--gold-light);
+}
 
 .lang-toggle {
   display: flex;
