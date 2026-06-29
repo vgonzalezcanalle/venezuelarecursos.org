@@ -20,9 +20,9 @@
         <span class="logo-text" data-en="Resource Hub" data-es="Centro de Recursos">Centro de Recursos</span>
       </a>
       <nav class="nav-links">
-        <a href="#" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
-        <a href="#" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
-        <a href="#" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
+        <a href="#recursos" data-page="resources" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
+        <a href="#enviar" data-page="submit" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
+        <a href="#acerca" data-page="about" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
       </nav>
       <button class="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
         <span class="lang-en">EN</span>
@@ -34,9 +34,9 @@
       </button>
     </div>
     <div class="mobile-menu" id="mobileMenu">
-      <a href="#" onclick="showPage('resources'); toggleMobileMenu()" data-en="Resources" data-es="Recursos">Recursos</a>
-      <a href="#" onclick="showPage('submit'); toggleMobileMenu()" data-en="Submit" data-es="Enviar">Enviar</a>
-      <a href="#" onclick="showPage('about'); toggleMobileMenu()" data-en="About" data-es="Acerca de">Acerca de</a>
+      <a href="#recursos" data-page="resources" onclick="showPage('resources'); toggleMobileMenu()" data-en="Resources" data-es="Recursos">Recursos</a>
+      <a href="#enviar" data-page="submit" onclick="showPage('submit'); toggleMobileMenu()" data-en="Submit" data-es="Enviar">Enviar</a>
+      <a href="#acerca" data-page="about" onclick="showPage('about'); toggleMobileMenu()" data-en="About" data-es="Acerca de">Acerca de</a>
     </div>
   </header>
 
@@ -76,12 +76,7 @@
             <p data-en="Support verified organizations providing aid on the ground." data-es="Apoya a organizaciones verificadas que brindan ayuda en el terreno.">Apoya a organizaciones verificadas que brindan ayuda en el terreno.</p>
             <button class="btn btn-sm" onclick="filterAndShow('Donations')" data-en="See donation resources" data-es="Ver recursos de donación">Ver recursos de donación</button>
           </div>
-          <div class="help-card">
-            <div class="help-icon">🤝</div>
-            <h3 data-en="Volunteer" data-es="Voluntariado">Voluntariado</h3>
-            <p data-en="Offer your time or professional skills to those in need." data-es="Ofrece tu tiempo o habilidades profesionales a quienes lo necesitan.">Ofrece tu tiempo o habilidades profesionales a quienes lo necesitan.</p>
-            <button class="btn btn-sm" onclick="filterAndShow('Volunteer Opportunities')" data-en="See volunteer opportunities" data-es="Ver oportunidades de voluntariado">Ver oportunidades de voluntariado</button>
-          </div>
+
           <div class="help-card">
             <div class="help-icon">📋</div>
             <h3 data-en="Add a Resource" data-es="Agregar un Recurso">Agregar un Recurso</h3>
