@@ -74,25 +74,55 @@ function applyLang() {
 }
 
 // ============================================================
-//  NAVIGATION
+//  NAVIGATION — hash-based routing
+//  URLs: #inicio | #recursos | #enviar | #acerca
 // ============================================================
 
-function showPage(pageId) {
+const PAGE_HASHES = {
+  "home":      "#inicio",
+  "resources": "#recursos",
+  "submit":    "#enviar",
+  "about":     "#acerca",
+};
+
+const HASH_TO_PAGE = Object.fromEntries(
+  Object.entries(PAGE_HASHES).map(([k, v]) => [v, k])
+);
+
+function showPage(pageId, pushState = true) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const page = document.getElementById(`page-${pageId}`);
   if (page) {
     page.classList.add("active");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  // If navigating to resources, reload
-  if (pageId === "resources") {
-    filterResources();
+
+  // Update URL hash without triggering the hashchange listener
+  const hash = PAGE_HASHES[pageId] || "#inicio";
+  if (pushState && window.location.hash !== hash) {
+    history.pushState({ pageId }, "", hash);
   }
-  // If navigating to submit, set up form
-  if (pageId === "submit") {
-    setupForm();
-  }
+
+  // Highlight active nav link
+  document.querySelectorAll(".nav-links a, .mobile-menu a").forEach(a => {
+    a.classList.remove("nav-active");
+  });
+  document.querySelectorAll(`.nav-links a[data-page="${pageId}"], .mobile-menu a[data-page="${pageId}"]`).forEach(a => {
+    a.classList.add("nav-active");
+  });
+
+  if (pageId === "resources") filterResources();
+  if (pageId === "submit") setupForm();
 }
+
+function navigateFromHash() {
+  const hash = window.location.hash || "#inicio";
+  const pageId = HASH_TO_PAGE[hash] || "home";
+  showPage(pageId, false);
+}
+
+// Back / forward button support
+window.addEventListener("popstate", () => navigateFromHash());
 
 function toggleMobileMenu() {
   document.getElementById("mobileMenu").classList.toggle("open");
@@ -532,6 +562,9 @@ document.addEventListener("DOMContentLoaded", () => {
   applyLang();
   renderCategoryGrid();
   loadResources();
+
+  // Route to correct page based on URL hash on load
+  navigateFromHash();
 
   // Auto-refresh
   if (CONFIG.REFRESH_INTERVAL_MS) {
