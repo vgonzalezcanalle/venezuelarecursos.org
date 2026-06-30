@@ -511,6 +511,8 @@ body {
   flex-direction: column;
   gap: 10px;
   border-left: 4px solid var(--gold);
+  text-decoration: none;
+  color: inherit;
 }
 .resource-card:hover {
   border-color: var(--gold);
