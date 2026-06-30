@@ -91,7 +91,7 @@ const HASH_TO_PAGE = Object.fromEntries(
   Object.entries(PAGE_HASHES).map(([k, v]) => [v, k])
 );
 
-function showPage(pageId, pushState = true) {
+function showPage(pageId, pushState = true, queryParams = null) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const page = document.getElementById(`page-${pageId}`);
   if (page) {
@@ -99,8 +99,10 @@ function showPage(pageId, pushState = true) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Update URL hash without triggering the hashchange listener
-  const hash = PAGE_HASHES[pageId] || "#inicio";
+  // Build the hash, optionally with query params (e.g. #recursos?categoria=Donaciones)
+  const baseHash = PAGE_HASHES[pageId] || "#inicio";
+  const hash = queryParams ? `${baseHash}?${queryParams}` : baseHash;
+
   if (pushState && window.location.hash !== hash) {
     history.pushState({ pageId }, "", hash);
   }
@@ -117,9 +119,47 @@ function showPage(pageId, pushState = true) {
   if (pageId === "submit") setupForm();
 }
 
+// Parse "#recursos?categoria=Donaciones&ubicacion=Caracas" into { page, params }
+function parseHash() {
+  const raw = window.location.hash || "#inicio";
+  const [hashPart, queryPart] = raw.split("?");
+  const pageId = HASH_TO_PAGE[hashPart] || "home";
+  const params = new URLSearchParams(queryPart || "");
+  return { pageId, params };
+}
+
+// Update just the query string portion of the current hash without pushing a new history entry
+// unless explicitly told to. Used when filters change while already on the Resources page.
+function updateHashParams(params, pushState = true) {
+  const pageId = "resources";
+  const baseHash = PAGE_HASHES[pageId];
+  const queryStr = params.toString();
+  const hash = queryStr ? `${baseHash}?${queryStr}` : baseHash;
+
+  if (window.location.hash !== hash) {
+    if (pushState) {
+      history.pushState({ pageId }, "", hash);
+    } else {
+      history.replaceState({ pageId }, "", hash);
+    }
+  }
+}
+
 function navigateFromHash() {
-  const hash = window.location.hash || "#inicio";
-  const pageId = HASH_TO_PAGE[hash] || "home";
+  const { pageId, params } = parseHash();
+
+  // If landing on resources with params, pre-set the filters before rendering
+  if (pageId === "resources") {
+    const cat = params.get("categoria");
+    const loc = params.get("ubicacion");
+    const q = params.get("buscar");
+
+    if (cat) activeCategory = cat;
+    if (cat) document.getElementById("categoryFilter").value = cat;
+    if (loc) document.getElementById("locationFilter").value = loc;
+    if (q) document.getElementById("searchInput").value = q;
+  }
+
   showPage(pageId, false);
 }
 
@@ -153,7 +193,19 @@ function renderCategoryGrid() {
 function filterAndShow(categoryEn) {
   activeCategory = categoryEn;
   document.getElementById("categoryFilter").value = categoryEn;
-  showPage("resources");
+
+  const params = new URLSearchParams();
+  params.set("categoria", categoryEn);
+
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page-resources").classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  updateHashParams(params, true);
+
+  document.querySelectorAll(".nav-links a, .mobile-menu a").forEach(a => a.classList.remove("nav-active"));
+  document.querySelectorAll(`.nav-links a[data-page="resources"], .mobile-menu a[data-page="resources"]`).forEach(a => a.classList.add("nav-active"));
+
   filterResources();
 }
 
@@ -474,13 +526,18 @@ function populateFilters() {
     locFilter.add(opt);
   });
 
-  // Restore active category if set
+  // Restore active category and location if set (e.g. from a shared URL)
   if (activeCategory) {
     catFilter.value = activeCategory;
   }
+  const { params } = parseHash();
+  const locFromUrl = params.get("ubicacion");
+  if (locFromUrl) {
+    locFilter.value = locFromUrl;
+  }
 }
 
-function filterResources() {
+function filterResources(fromUserInteraction = false) {
   const query = (document.getElementById("searchInput")?.value || "").toLowerCase();
   const category = document.getElementById("categoryFilter")?.value || "";
   const location = document.getElementById("locationFilter")?.value || "";
@@ -504,6 +561,18 @@ function filterResources() {
   });
 
   renderResources(filtered);
+
+  // Sync URL with current filter state — only while on the Resources page
+  if (document.getElementById("page-resources")?.classList.contains("active")) {
+    const params = new URLSearchParams();
+    if (category) params.set("categoria", category);
+    if (location) params.set("ubicacion", location);
+    if (query) params.set("buscar", query);
+
+    // Dropdown changes push a new history entry (so back button steps through them);
+    // live typing in search just replaces, to avoid flooding history with keystrokes.
+    updateHashParams(params, fromUserInteraction);
+  }
 }
 
 // ============================================================
