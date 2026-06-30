@@ -110,12 +110,12 @@
       <div class="search-filter-bar">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="Buscar recursos... / Search resources..." oninput="filterResources()" />
+          <input type="text" id="searchInput" placeholder="Buscar recursos... / Search resources..." oninput="filterResources(false)" />
         </div>
-        <select id="categoryFilter" onchange="filterResources()">
+        <select id="categoryFilter" onchange="filterResources(true)">
           <option value="" data-en="All Categories" data-es="Todas las Categorías">Todas las Categorías</option>
         </select>
-        <select id="locationFilter" onchange="filterResources()">
+        <select id="locationFilter" onchange="filterResources(true)">
           <option value="" data-en="All Locations" data-es="Todas las Ubicaciones">Todas las Ubicaciones</option>
         </select>
       </div>
