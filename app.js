@@ -100,12 +100,13 @@ function showPage(pageId, pushState = true, queryParams = null) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Build the hash, optionally with query params (e.g. #recursos?categoria=Donaciones)
+  // URL format: /?categoria=Donaciones#recursos  (query string BEFORE hash)
+  // This is the only format browsers reliably preserve when sharing links.
   const baseHash = PAGE_HASHES[pageId] || "#inicio";
-  const hash = queryParams ? `${baseHash}?${queryParams}` : baseHash;
+  const url = queryParams ? `/?${queryParams}${baseHash}` : `/${baseHash}`;
 
-  if (pushState && window.location.hash !== hash) {
-    history.pushState({ pageId }, "", hash);
+  if (pushState && window.location.pathname + window.location.search + window.location.hash !== url) {
+    history.pushState({ pageId }, "", url);
   }
 
   // Highlight active nav link
@@ -120,28 +121,39 @@ function showPage(pageId, pushState = true, queryParams = null) {
   if (pageId === "submit") setupForm();
 }
 
-// Parse "#recursos?categoria=Donaciones&ubicacion=Caracas" into { page, params }
+// Parse /?categoria=Donaciones#recursos into { pageId, params }
 function parseHash() {
-  const raw = window.location.hash || "#inicio";
-  const [hashPart, queryPart] = raw.split("?");
+  // Support both old format (#recursos?categoria=X) and new format (?categoria=X#recursos)
+  const hash = window.location.hash || "#inicio";
+  const search = window.location.search || "";
+
+  // New format: query string in window.location.search
+  if (search) {
+    const hashPart = hash.split("?")[0]; // strip any legacy ?params from hash
+    const pageId = HASH_TO_PAGE[hashPart] || "home";
+    const params = new URLSearchParams(search);
+    return { pageId, params };
+  }
+
+  // Legacy fallback: params were after the ? inside the hash (#recursos?categoria=X)
+  const [hashPart, queryPart] = hash.split("?");
   const pageId = HASH_TO_PAGE[hashPart] || "home";
   const params = new URLSearchParams(queryPart || "");
   return { pageId, params };
 }
 
-// Update just the query string portion of the current hash without pushing a new history entry
-// unless explicitly told to. Used when filters change while already on the Resources page.
+// Update URL to /?categoria=X#recursos format
 function updateHashParams(params, pushState = true) {
-  const pageId = "resources";
-  const baseHash = PAGE_HASHES[pageId];
+  const baseHash = PAGE_HASHES["resources"];
   const queryStr = params.toString();
-  const hash = queryStr ? `${baseHash}?${queryStr}` : baseHash;
+  const url = queryStr ? `/?${queryStr}${baseHash}` : `/${baseHash}`;
+  const current = window.location.pathname + window.location.search + window.location.hash;
 
-  if (window.location.hash !== hash) {
+  if (current !== url) {
     if (pushState) {
-      history.pushState({ pageId }, "", hash);
+      history.pushState({ pageId: "resources" }, "", url);
     } else {
-      history.replaceState({ pageId }, "", hash);
+      history.replaceState({ pageId: "resources" }, "", url);
     }
   }
 }
