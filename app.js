@@ -6,6 +6,7 @@
 let currentLang = CONFIG.DEFAULT_LANG || "es";
 let allResources = [];
 let activeCategory = "";
+let pendingLocationFilter = "";
 
 // --- Category definitions (EN + ES + emoji) ---
 const CATEGORIES = [
@@ -148,15 +149,17 @@ function updateHashParams(params, pushState = true) {
 function navigateFromHash() {
   const { pageId, params } = parseHash();
 
-  // If landing on resources with params, pre-set the filters before rendering
+  // If landing on resources with params, capture them now.
+  // NOTE: we can't set <select>.value yet — the <option> elements for
+  // categories/locations don't exist until populateFilters() runs after
+  // the Sheet data loads. We store the values and apply them there instead.
   if (pageId === "resources") {
     const cat = params.get("categoria");
     const loc = params.get("ubicacion");
     const q = params.get("buscar");
 
     if (cat) activeCategory = cat;
-    if (cat) document.getElementById("categoryFilter").value = cat;
-    if (loc) document.getElementById("locationFilter").value = loc;
+    pendingLocationFilter = loc || "";
     if (q) document.getElementById("searchInput").value = q;
   }
 
@@ -530,10 +533,9 @@ function populateFilters() {
   if (activeCategory) {
     catFilter.value = activeCategory;
   }
-  const { params } = parseHash();
-  const locFromUrl = params.get("ubicacion");
-  if (locFromUrl) {
-    locFilter.value = locFromUrl;
+  if (pendingLocationFilter) {
+    locFilter.value = pendingLocationFilter;
+    pendingLocationFilter = ""; // consume it — don't reapply on every future populateFilters call
   }
 }
 
