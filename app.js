@@ -7,6 +7,8 @@ let currentLang = CONFIG.DEFAULT_LANG || "es";
 let allResources = [];
 let activeCategory = "";
 let pendingLocationFilter = "";
+let pendingRecursoSlug = "";
+let dataLoaded = false;
 
 // --- Category definitions (EN + ES + emoji) ---
 const CATEGORIES = [
@@ -161,18 +163,18 @@ function updateHashParams(params, pushState = true) {
 function navigateFromHash() {
   const { pageId, params } = parseHash();
 
-  // If landing on resources with params, capture them now.
-  // NOTE: we can't set <select>.value yet — the <option> elements for
-  // categories/locations don't exist until populateFilters() runs after
-  // the Sheet data loads. We store the values and apply them there instead.
   if (pageId === "resources") {
     const cat = params.get("categoria");
     const loc = params.get("ubicacion");
     const q = params.get("buscar");
+    const recurso = params.get("recurso");
 
     if (cat) activeCategory = cat;
     pendingLocationFilter = loc || "";
     if (q) document.getElementById("searchInput").value = q;
+
+    // If a specific resource was linked, open its modal once data loads
+    if (recurso) pendingRecursoSlug = recurso;
   }
 
   showPage(pageId, false);
@@ -248,11 +250,23 @@ async function loadResources() {
     if (!res.ok) throw new Error("Network error");
     const csv = await res.text();
     allResources = parseCSV(csv);
+    dataLoaded = true;
 
     status.classList.add("hidden");
     populateFilters();
     renderCategoryGrid();
     filterResources();
+
+    // If a direct resource link was opened, find and open that resource's modal
+    if (pendingRecursoSlug) {
+      const r = findResourceBySlug(pendingRecursoSlug);
+      if (r) {
+        const idx = allResources.indexOf(r);
+        window._currentFilteredResources = allResources;
+        openModal(idx, true);
+      }
+      pendingRecursoSlug = "";
+    }
 
   } catch (err) {
     console.error("Failed to load resources:", err);
@@ -506,6 +520,7 @@ function loadSampleData() {
       "Last Verified": "06/27/2026"
     },
   ];
+  dataLoaded = true;
   populateFilters();
   renderCategoryGrid();
   filterResources();
@@ -576,15 +591,13 @@ function filterResources(fromUserInteraction = false) {
 
   renderResources(filtered);
 
-  // Sync URL with current filter state — only while on the Resources page
-  if (document.getElementById("page-resources")?.classList.contains("active")) {
+  // Only sync URL after data has loaded — prevents overwriting shared link params on initial page load
+  if (dataLoaded && document.getElementById("page-resources")?.classList.contains("active")) {
     const params = new URLSearchParams();
     if (category) params.set("categoria", category);
     if (location) params.set("ubicacion", location);
     if (query) params.set("buscar", query);
 
-    // Dropdown changes push a new history entry (so back button steps through them);
-    // live typing in search just replaces, to avoid flooding history with keystrokes.
     updateHashParams(params, fromUserInteraction);
   }
 }
@@ -592,6 +605,26 @@ function filterResources(fromUserInteraction = false) {
 // ============================================================
 //  RENDER RESOURCE CARDS
 // ============================================================
+
+// Generate a URL-safe slug from a resource name
+function slugify(str) {
+  return (str || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // strip accents
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .substring(0, 60);
+}
+
+// Find a resource by slug across allResources
+function findResourceBySlug(slug) {
+  return allResources.find(r => {
+    const en = r["Resource Name"] || "";
+    const es = r["Nombre del Recurso"] || "";
+    return slugify(en) === slug || slugify(es) === slug;
+  });
+}
 
 function renderResources(resources) {
   const grid = document.getElementById("resourceGrid");
@@ -619,14 +652,17 @@ function renderResources(resources) {
     const catLabel = currentLang === "en" ? catObj.en : catObj.es;
     const location = r["Location"] || "";
     const cost = r["Cost (Free / Paid / Unknown)"] || "";
-    const contact = r["Contact (all in one cell: phone / WhatsApp / email / website / socials)"] || "";
     const verified = r["Last Verified"] || "";
 
     const costLabel = getCostLabel(cost);
     const shortDesc = desc.length > 120 ? desc.substring(0, 120) + "…" : desc;
 
+    // Build a shareable URL for this specific resource
+    const slug = slugify(r["Resource Name"] || r["Nombre del Recurso"]);
+    const cardUrl = `/?recurso=${encodeURIComponent(slug)}#recursos`;
+
     return `
-      <div class="resource-card" onclick="openModal(${idx}, true)">
+      <a class="resource-card" href="${cardUrl}" onclick="openModal(${idx}, true, event)">
         <div class="card-header">
           <span class="card-category-icon">${catObj.icon}</span>
           <span class="card-category">${catLabel}</span>
@@ -639,7 +675,7 @@ function renderResources(resources) {
           ${verified ? `<span class="card-verified">${currentLang === "en" ? "Verified" : "Verificado"}: ${escHtml(verified)}</span>` : ""}
         </div>
         <div class="card-cta">${currentLang === "en" ? "View details →" : "Ver detalles →"}</div>
-      </div>
+      </a>
     `;
   }).join("");
 }
@@ -660,10 +696,16 @@ function escHtml(str) {
 //  MODAL
 // ============================================================
 
-function openModal(idx, fromFiltered) {
+function openModal(idx, fromFiltered, event) {
+  if (event) event.preventDefault(); // prevent <a> tag from navigating
   const list = fromFiltered && window._currentFilteredResources ? window._currentFilteredResources : allResources;
   const r = list[idx];
   if (!r) return;
+
+  // Push resource URL so it's shareable
+  const slug = slugify(r["Resource Name"] || r["Nombre del Recurso"]);
+  const resourceUrl = `/?recurso=${encodeURIComponent(slug)}#recursos`;
+  history.pushState({ recurso: slug }, "", resourceUrl);
 
   const name = currentLang === "en" ? (r["Resource Name"] || r["Nombre del Recurso"]) : (r["Nombre del Recurso"] || r["Resource Name"]);
   const desc = currentLang === "en" ? (r["Description"] || r["Descripción"]) : (r["Descripción"] || r["Description"]);
@@ -746,6 +788,10 @@ function closeModal(event) {
 function closeModalBtn() {
   document.getElementById("resourceModal").classList.add("hidden");
   document.body.style.overflow = "";
+  // Restore URL to the resources page (without the recurso param)
+  const params = new URLSearchParams();
+  if (activeCategory) params.set("categoria", activeCategory);
+  updateHashParams(params, false);
 }
 
 document.addEventListener("keydown", e => {
