@@ -12,7 +12,9 @@ let pendingRecursoSlug = "";
 let dataLoaded = false;
 
 // --- Category definitions (EN + ES + emoji) ---
-const CATEGORIES = [
+// Replaced at runtime by loadCategories() if CONFIG.CATEGORIES_CSV_URL is set;
+// this list is the fallback when that sheet isn't configured or fails to load.
+let CATEGORIES = [
   { en: "Building Inspection",               es: "Inspección de Viviendas y Edificaciones", icon: "🏠" },
   { en: "Home Repair & Recovery",            es: "Reparación y Recuperación de Viviendas",  icon: "🔨" },
   { en: "Medical Care",                      es: "Atención Médica",                         icon: "🚑" },
@@ -234,6 +236,37 @@ function filterAndShow(categoryEn) {
 }
 
 // ============================================================
+//  CATEGORIES (optional — pulled from a separate sheet tab)
+// ============================================================
+
+// Loads category definitions (name EN/ES + icon) from CONFIG.CATEGORIES_CSV_URL,
+// so new categories can be added in the Sheet without a code change. Silently
+// keeps the hardcoded fallback list above if the URL isn't set or the fetch fails.
+async function loadCategories() {
+  if (!CONFIG.CATEGORIES_CSV_URL) return;
+
+  try {
+    const res = await fetch(CONFIG.CATEGORIES_CSV_URL);
+    if (!res.ok) throw new Error("Network error");
+    const csv = await res.text();
+    const rows = parseGenericCSV(csv, "Category");
+    if (rows.length === 0) return;
+
+    CATEGORIES = rows.map(row => ({
+      en: row["Category"],
+      es: row["Categoría"] || row["Category"],
+      icon: row["Icon"] || "📌",
+    }));
+
+    renderCategoryGrid();
+    if (dataLoaded) renderResources(window._currentFilteredResources || allResources);
+  } catch (err) {
+    console.error("Failed to load categories:", err);
+    // Keep whatever CATEGORIES already holds (fallback or last successful load)
+  }
+}
+
+// ============================================================
 //  DATA LOADING
 // ============================================================
 
@@ -284,11 +317,17 @@ async function loadResources() {
 }
 
 function parseCSV(csv) {
+  return parseGenericCSV(csv).filter(obj => obj["Resource Name"] || obj["Nombre del Recurso"]);
+}
+
+// Parses a CSV string (Google Sheets "publish to web" export) into an array of
+// row objects keyed by header. If requiredKey is given, rows missing it are dropped.
+function parseGenericCSV(csv, requiredKey) {
   const lines = csv.split("\n");
   if (lines.length < 2) return [];
 
   const headers = parseCSVRow(lines[0]);
-  const resources = [];
+  const rows = [];
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -299,12 +338,9 @@ function parseCSV(csv) {
     headers.forEach((h, idx) => {
       obj[h.trim()] = (values[idx] || "").trim();
     });
-    // Only include rows that have a resource name
-    if (obj["Resource Name"] || obj["Nombre del Recurso"]) {
-      resources.push(obj);
-    }
+    if (!requiredKey || obj[requiredKey]) rows.push(obj);
   }
-  return resources;
+  return rows;
 }
 
 function parseCSVRow(row) {
@@ -855,7 +891,8 @@ function setupForm() {
 //  INIT
 // ============================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadCategories(); // populate CATEGORIES from the sheet before the first render
   applyLang(); // already renders the category grid
   loadResources();
   loadNews();
@@ -866,6 +903,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Auto-refresh
   if (CONFIG.REFRESH_INTERVAL_MS) {
     setInterval(loadResources, CONFIG.REFRESH_INTERVAL_MS);
+    setInterval(loadCategories, CONFIG.REFRESH_INTERVAL_MS);
     setInterval(loadNews, CONFIG.REFRESH_INTERVAL_MS);
   }
 });
