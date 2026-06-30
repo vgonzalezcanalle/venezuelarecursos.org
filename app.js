@@ -6,6 +6,7 @@
 let currentLang = CONFIG.DEFAULT_LANG || "es";
 let allResources = [];
 let activeCategory = "";
+let activeLocation = "";
 let pendingLocationFilter = "";
 let pendingRecursoSlug = "";
 let dataLoaded = false;
@@ -556,13 +557,17 @@ function populateFilters() {
     locFilter.add(opt);
   });
 
-  // Restore active category and location if set (e.g. from a shared URL)
+  // Restore active category and location if set (e.g. from a shared URL or a
+  // previous selection) — both must survive a dropdown rebuild (e.g. on auto-refresh).
   if (activeCategory) {
     catFilter.value = activeCategory;
   }
   if (pendingLocationFilter) {
-    locFilter.value = pendingLocationFilter;
+    activeLocation = pendingLocationFilter;
     pendingLocationFilter = ""; // consume it — don't reapply on every future populateFilters call
+  }
+  if (activeLocation) {
+    locFilter.value = activeLocation;
   }
 }
 
@@ -577,6 +582,7 @@ function filterResources(fromUserInteraction = false) {
     ? (document.getElementById("locationFilter")?.value || "")
     : (pendingLocationFilter || "");
   if (dataLoaded) activeCategory = category;
+  if (dataLoaded) activeLocation = location;
 
   const filtered = allResources.filter(r => {
     const nameEn = (r["Resource Name"] || "").toLowerCase();
@@ -794,9 +800,13 @@ function closeModal(event) {
 function closeModalBtn() {
   document.getElementById("resourceModal").classList.add("hidden");
   document.body.style.overflow = "";
-  // Restore URL to the resources page (without the recurso param)
+  // Restore URL to the resources page (without the recurso param), preserving
+  // whatever category/location/search filters are still active
   const params = new URLSearchParams();
   if (activeCategory) params.set("categoria", activeCategory);
+  if (activeLocation) params.set("ubicacion", activeLocation);
+  const query = document.getElementById("searchInput")?.value || "";
+  if (query) params.set("buscar", query);
   updateHashParams(params, false);
 }
 
@@ -832,8 +842,7 @@ function setupForm() {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  applyLang();
-  renderCategoryGrid();
+  applyLang(); // already renders the category grid
   loadResources();
   loadNews();
 
