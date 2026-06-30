@@ -12,4 +12,10 @@ const CONFIG = {
   DEFAULT_LANG: "es",
   REFRESH_INTERVAL_MS: 300000,
 
+  // Bluesky handle to pull earthquake-related news from (no API key needed)
+  BSKY_NEWS_HANDLE: "noticiasvv.vzla.masto.host.ap.brid.gy",
+
+  // Earthquake date — news pagination stops once it reaches posts older than this
+  BSKY_NEWS_SINCE: "2026-06-20",
+
 };

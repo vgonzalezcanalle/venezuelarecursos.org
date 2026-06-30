@@ -111,6 +111,24 @@ body {
   color: var(--gold-light);
 }
 
+.nav-whatsapp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #25D366;
+  color: var(--white-pure);
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.nav-whatsapp:hover { background: #1EBE57; }
+.wa-icon { font-size: 0.95rem; }
+
 .lang-toggle {
   display: flex;
   align-items: center;
@@ -166,6 +184,16 @@ body {
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 .mobile-menu a:hover { background: rgba(255,255,255,0.07); }
+
+.mobile-whatsapp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--white-pure) !important;
+  background: #25D366;
+  font-weight: 600;
+}
+.mobile-whatsapp:hover { background: #1EBE57; }
 
 /* ============================================================
    HERO
@@ -548,6 +576,77 @@ body {
 }
 
 /* ============================================================
+   NEWS GRID & CARDS
+   ============================================================ */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--white-pure);
+  border: 2px solid var(--gray-200);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.news-card:hover {
+  border-color: var(--gold);
+  border-left-color: var(--gold);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.news-thumb {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--gray-100);
+}
+
+.news-body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.news-date {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.news-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.35;
+}
+
+.news-desc {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.news-cta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-top: 4px;
+}
+
+/* ============================================================
    STATUS / LOADING / EMPTY
    ============================================================ */
 .resources-status {
@@ -905,6 +1004,7 @@ body {
    ============================================================ */
 @media (max-width: 768px) {
   .nav-links { display: none; }
+  .nav-whatsapp { display: none; }
   .nav-hamburger { display: flex; }
   .lang-toggle { margin-left: auto; }
 
@@ -918,6 +1018,7 @@ body {
   .help-section { padding: 44px 24px; }
 
   .resource-grid { grid-template-columns: 1fr; }
+  .news-grid { grid-template-columns: 1fr; }
 
   .search-filter-bar { flex-direction: column; }
   #categoryFilter, #locationFilter { width: 100%; }

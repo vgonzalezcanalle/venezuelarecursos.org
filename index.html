@@ -21,9 +21,14 @@
       </a>
       <nav class="nav-links">
         <a href="#recursos" data-page="resources" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
+        <a href="#noticias" data-page="news" onclick="showPage('news')" data-en="News" data-es="Noticias">Noticias</a>
         <a href="#enviar" data-page="submit" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
         <a href="#acerca" data-page="about" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
       </nav>
+      <a class="nav-whatsapp" href="https://wa.me/14155238886?text=join%20check-riding" target="_blank" rel="noopener" aria-label="WhatsApp">
+        <span class="wa-icon">💬</span>
+        <span data-en="WhatsApp Bot" data-es="Bot de WhatsApp">Bot de WhatsApp</span>
+      </a>
       <button class="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
         <span class="lang-en">EN</span>
         <span class="lang-divider">/</span>
@@ -35,8 +40,13 @@
     </div>
     <div class="mobile-menu" id="mobileMenu">
       <a href="#recursos" data-page="resources" onclick="showPage('resources'); toggleMobileMenu()" data-en="Resources" data-es="Recursos">Recursos</a>
+      <a href="#noticias" data-page="news" onclick="showPage('news'); toggleMobileMenu()" data-en="News" data-es="Noticias">Noticias</a>
       <a href="#enviar" data-page="submit" onclick="showPage('submit'); toggleMobileMenu()" data-en="Submit" data-es="Enviar">Enviar</a>
       <a href="#acerca" data-page="about" onclick="showPage('about'); toggleMobileMenu()" data-en="About" data-es="Acerca de">Acerca de</a>
+      <a class="mobile-whatsapp" href="https://wa.me/14155238886?text=join%20check-riding" target="_blank" rel="noopener">
+        <span class="wa-icon">💬</span>
+        <span data-en="WhatsApp Bot" data-es="Bot de WhatsApp">Bot de WhatsApp</span>
+      </a>
     </div>
   </header>
 
@@ -120,6 +130,28 @@
       <div id="noResults" class="no-results hidden">
         <div class="no-results-icon">🔎</div>
         <p data-en="No resources found. Try a different search or category." data-es="No se encontraron recursos. Intenta con otra búsqueda o categoría.">No se encontraron recursos. Intenta con otra búsqueda o categoría.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- NEWS PAGE -->
+  <main id="page-news" class="page">
+    <div class="container">
+      <div class="page-header">
+        <h1 data-en="News & Updates" data-es="Noticias y Actualizaciones">Noticias y Actualizaciones</h1>
+        <p data-en="Earthquake-related posts from Noticias Venevisión, pulled automatically from Bluesky. Always verify critical information with official sources." data-es="Publicaciones sobre el terremoto de Noticias Venevisión, obtenidas automáticamente desde Bluesky. Verifica siempre la información crítica con fuentes oficiales.">Publicaciones sobre el terremoto de Noticias Venevisión, obtenidas automáticamente desde Bluesky. Verifica siempre la información crítica con fuentes oficiales.</p>
+      </div>
+
+      <div id="newsStatus" class="resources-status">
+        <div class="loading-spinner"></div>
+        <span data-en="Loading news..." data-es="Cargando noticias...">Cargando noticias...</span>
+      </div>
+
+      <div id="newsGrid" class="news-grid"></div>
+
+      <div id="newsNoResults" class="no-results hidden">
+        <div class="no-results-icon">📰</div>
+        <p data-en="No earthquake-related news found right now." data-es="No se encontraron noticias relacionadas con el terremoto por ahora.">No se encontraron noticias relacionadas con el terremoto por ahora.</p>
       </div>
     </div>
   </main>
@@ -223,6 +255,7 @@
       </div>
       <div class="footer-links">
         <a href="#" onclick="showPage('resources')" data-en="Resources" data-es="Recursos">Recursos</a>
+        <a href="#" onclick="showPage('news')" data-en="News" data-es="Noticias">Noticias</a>
         <a href="#" onclick="showPage('submit')" data-en="Submit" data-es="Enviar">Enviar</a>
         <a href="#" onclick="showPage('about')" data-en="About" data-es="Acerca de">Acerca de</a>
       </div>
