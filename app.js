@@ -568,9 +568,15 @@ function populateFilters() {
 
 function filterResources(fromUserInteraction = false) {
   const query = (document.getElementById("searchInput")?.value || "").toLowerCase();
-  const category = document.getElementById("categoryFilter")?.value || "";
-  const location = document.getElementById("locationFilter")?.value || "";
-  activeCategory = category;
+  // Before data loads, keep activeCategory as set from URL params — don't let an empty
+  // dropdown overwrite it. After data loads, always read from the dropdown normally.
+  const category = dataLoaded
+    ? (document.getElementById("categoryFilter")?.value || "")
+    : activeCategory;
+  const location = dataLoaded
+    ? (document.getElementById("locationFilter")?.value || "")
+    : (pendingLocationFilter || "");
+  if (dataLoaded) activeCategory = category;
 
   const filtered = allResources.filter(r => {
     const nameEn = (r["Resource Name"] || "").toLowerCase();
