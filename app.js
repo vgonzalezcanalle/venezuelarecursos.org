@@ -41,6 +41,12 @@ function getCategoryObj(enName) {
   return CATEGORIES.find(c => c.en === enName) || { en: enName, es: enName, icon: "📌" };
 }
 
+// A resource's "Category" cell may list more than one category, comma-separated
+// (e.g. "Donations, Financial Assistance"), so it can appear under each one.
+function getCategoriesOf(r) {
+  return (r["Category"] || "").split(",").map(c => c.trim()).filter(Boolean);
+}
+
 // ============================================================
 //  LANGUAGE
 // ============================================================
@@ -197,7 +203,7 @@ function renderCategoryGrid() {
   if (!grid) return;
   grid.innerHTML = CATEGORIES.map(cat => {
     const label = currentLang === "en" ? cat.en : cat.es;
-    const count = allResources.filter(r => r.Category === cat.en).length;
+    const count = allResources.filter(r => getCategoriesOf(r).includes(cat.en)).length;
     return `
       <button class="category-card ${count === 0 ? 'category-empty' : ''}" onclick="filterAndShow('${cat.en}')">
         <span class="category-icon">${cat.icon}</span>
@@ -540,7 +546,7 @@ function populateFilters() {
   while (catFilter.options.length > 1) catFilter.remove(1);
   while (locFilter.options.length > 1) locFilter.remove(1);
 
-  const cats = [...new Set(allResources.map(r => r["Category"]).filter(Boolean))];
+  const cats = [...new Set(allResources.flatMap(getCategoriesOf))];
   cats.sort().forEach(cat => {
     const catObj = getCategoryObj(cat);
     const opt = document.createElement("option");
@@ -595,7 +601,7 @@ function filterResources(fromUserInteraction = false) {
       nameEn.includes(query) || nameEs.includes(query) ||
       descEn.includes(query) || descEs.includes(query) ||
       loc.includes(query);
-    const matchesCat = !category || r["Category"] === category;
+    const matchesCat = !category || getCategoriesOf(r).includes(category);
     const matchesLoc = !location || r["Location"] === location;
 
     return matchesQuery && matchesCat && matchesLoc;
@@ -659,9 +665,7 @@ function renderResources(resources) {
   grid.innerHTML = resources.map((r, idx) => {
     const name = currentLang === "en" ? (r["Resource Name"] || r["Nombre del Recurso"]) : (r["Nombre del Recurso"] || r["Resource Name"]);
     const desc = currentLang === "en" ? (r["Description"] || r["Descripción"]) : (r["Descripción"] || r["Description"]);
-    const catEn = r["Category"] || "";
-    const catObj = getCategoryObj(catEn);
-    const catLabel = currentLang === "en" ? catObj.en : catObj.es;
+    const catObjs = getCategoriesOf(r).map(getCategoryObj);
     const location = r["Location"] || "";
     const cost = r["Cost (Free / Paid / Unknown)"] || "";
     const verified = r["Last Verified"] || "";
@@ -676,8 +680,14 @@ function renderResources(resources) {
     return `
       <a class="resource-card" href="${cardUrl}" onclick="openModal(${idx}, true, event)">
         <div class="card-header">
-          <span class="card-category-icon">${catObj.icon}</span>
-          <span class="card-category">${catLabel}</span>
+          <div class="card-categories">
+            ${catObjs.map(catObj => `
+              <span class="card-category">
+                <span class="card-category-icon">${catObj.icon}</span>
+                ${escHtml(currentLang === "en" ? catObj.en : catObj.es)}
+              </span>
+            `).join("")}
+          </div>
           <span class="card-cost ${cost.toLowerCase()}">${costLabel}</span>
         </div>
         <h3 class="card-title">${escHtml(name)}</h3>
@@ -721,9 +731,7 @@ function openModal(idx, fromFiltered, event) {
 
   const name = currentLang === "en" ? (r["Resource Name"] || r["Nombre del Recurso"]) : (r["Nombre del Recurso"] || r["Resource Name"]);
   const desc = currentLang === "en" ? (r["Description"] || r["Descripción"]) : (r["Descripción"] || r["Description"]);
-  const catEn = r["Category"] || "";
-  const catObj = getCategoryObj(catEn);
-  const catLabel = currentLang === "en" ? catObj.en : catObj.es;
+  const catObjs = getCategoriesOf(r).map(getCategoryObj);
   const location = r["Location"] || "";
   const cost = r["Cost (Free / Paid / Unknown)"] || "";
   const contact = r["Contact (all in one cell: phone / WhatsApp / email / website / socials)"] || "";
@@ -735,8 +743,14 @@ function openModal(idx, fromFiltered, event) {
   const modalContent = document.getElementById("modalContent");
   modalContent.innerHTML = `
     <div class="modal-category">
-      <span>${catObj.icon}</span>
-      <span>${escHtml(catLabel)}</span>
+      <div class="modal-categories">
+        ${catObjs.map(catObj => `
+          <span class="modal-category-chip">
+            <span>${catObj.icon}</span>
+            <span>${escHtml(currentLang === "en" ? catObj.en : catObj.es)}</span>
+          </span>
+        `).join("")}
+      </div>
       <span class="card-cost ${cost.toLowerCase()}">${costLabel}</span>
     </div>
     <h2 class="modal-title">${escHtml(name)}</h2>

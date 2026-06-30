@@ -527,14 +527,22 @@ body {
   gap: 6px;
   flex-wrap: wrap;
 }
+.card-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
 .card-category-icon { font-size: 1rem; }
 .card-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--navy);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  flex: 1;
 }
 
 .card-cost {
@@ -748,6 +756,17 @@ body {
   color: var(--gray-600);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.modal-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+}
+.modal-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .modal-title {
