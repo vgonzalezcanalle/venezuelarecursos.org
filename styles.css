@@ -627,12 +627,29 @@ body {
   flex: 1;
 }
 
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .news-date {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--gray-400);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.news-source {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: rgba(13,34,64,0.08);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
 }
 
 .news-title {

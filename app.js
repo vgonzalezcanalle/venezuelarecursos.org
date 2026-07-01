@@ -367,15 +367,15 @@ function parseCSVRow(row) {
 //  NEWS (Bluesky) — fetched from the public, keyless Bluesky API
 // ============================================================
 
+// Used when a source has noFilter: false — only Spanish-language general news bots need this.
 const BSKY_EARTHQUAKE_KEYWORDS = ["terremoto", "sismo", "replica", "desaparecid", "damnificad", "derrumbe", "rescate"];
-// Posts matching a keyword above are dropped unless they also mention Venezuela,
-// since the source account also covers earthquakes in other countries.
+// Posts matching a keyword are dropped if they mention a foreign country but not Venezuela.
 const BSKY_FOREIGN_HINTS = ["japon", "tokio", "turquia", "mexico", "chile", "indonesia", "filipinas", "peru", "ecuador", "colombia", "italia", "marruecos", "afganistan", "china", "taiwan", "nepal", "myanmar"];
 const BSKY_VENEZUELA_HINTS = ["venezuela", "caracas", "la guaira", "vargas", "miranda", "vzla"];
-const BSKY_MAX_PAGES = 5; // safety cap on pagination (5 x 100 posts)
+const BSKY_MAX_PAGES = 5; // safety cap: 5 x 100 posts per source
 
 function normalizeText(str) {
-  return (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return (str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 function isEarthquakeRelevant(text) {
@@ -389,16 +389,45 @@ function isEarthquakeRelevant(text) {
 
 let allNews = [];
 
+async function fetchSourcePosts(source) {
+  const since = CONFIG.BSKY_NEWS_SINCE || "";
+  let feedItems = [];
+  let cursor = "";
+
+  for (let page = 0; page < BSKY_MAX_PAGES; page++) {
+    const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(source.handle)}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Network error fetching ${source.handle}`);
+    const data = await res.json();
+    const feed = data.feed || [];
+    if (feed.length === 0) break;
+
+    feedItems.push(...feed);
+
+    const oldestDate = feed[feed.length - 1]?.post?.record?.createdAt || "";
+    cursor = data.cursor || "";
+    if (!cursor || (since && oldestDate < since)) break;
+  }
+
+  return feedItems
+    .filter(item => !item.reason)
+    .map(item => item.post)
+    .filter(post => post && post.record)
+    .filter(post => !since || post.record.createdAt >= since)
+    .filter(post => source.noFilter || isEarthquakeRelevant(post.record.text))
+    .map(parseNewsPost);
+}
+
 async function loadNews() {
   const status = document.getElementById("newsStatus");
   const grid = document.getElementById("newsGrid");
   if (!grid) return;
 
-  const handle = CONFIG.BSKY_NEWS_HANDLE;
-  if (!handle) {
+  const sources = CONFIG.BSKY_NEWS_HANDLES || [];
+  if (!sources.length) {
     status.innerHTML = `<p class="config-warning">⚙️ ${currentLang === "en"
-      ? "To display news, add a Bluesky handle to <code>config.js</code>."
-      : "Para mostrar noticias, agrega un usuario de Bluesky en <code>config.js</code>."}</p>`;
+      ? "To display news, add Bluesky sources to <code>config.js</code>."
+      : "Para mostrar noticias, agrega fuentes de Bluesky en <code>config.js</code>."}</p>`;
     return;
   }
 
@@ -406,32 +435,10 @@ async function loadNews() {
     status.classList.remove("hidden");
     status.innerHTML = `<div class="loading-spinner"></div><span>${currentLang === "en" ? "Loading news..." : "Cargando noticias..."}</span>`;
 
-    const since = CONFIG.BSKY_NEWS_SINCE || "";
-    let feedItems = [];
-    let cursor = "";
-
-    for (let page = 0; page < BSKY_MAX_PAGES; page++) {
-      const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Network error");
-      const data = await res.json();
-      const feed = data.feed || [];
-      if (feed.length === 0) break;
-
-      feedItems.push(...feed);
-
-      const oldestDate = feed[feed.length - 1]?.post?.record?.createdAt || "";
-      cursor = data.cursor || "";
-      if (!cursor || (since && oldestDate < since)) break;
-    }
-
-    allNews = feedItems
-      .filter(item => !item.reason) // skip reposts, keep only the account's own posts
-      .map(item => item.post)
-      .filter(post => post && post.record)
-      .filter(post => !since || post.record.createdAt >= since)
-      .filter(post => isEarthquakeRelevant(post.record.text))
-      .map(parseNewsPost);
+    const results = await Promise.all(sources.map(fetchSourcePosts));
+    const combined = results.flat();
+    combined.sort((a, b) => b.date.localeCompare(a.date));
+    allNews = combined;
 
     status.classList.add("hidden");
     renderNews(allNews);
@@ -447,6 +454,7 @@ async function loadNews() {
 function parseNewsPost(post) {
   const record = post.record || {};
   const external = post.embed && post.embed.$type === "app.bsky.embed.external#view" ? post.embed.external : null;
+  const source = (post.author?.displayName || "").replace(/\s*\(.*?\)\s*/g, "").trim();
 
   return {
     title: external?.title || (record.text || "").split("\n")[0],
@@ -454,12 +462,13 @@ function parseNewsPost(post) {
     thumb: external?.thumb || "",
     link: external?.uri || bskyPostUrl(post),
     date: record.createdAt || post.indexedAt || "",
+    source,
   };
 }
 
 function bskyPostUrl(post) {
   const rkey = (post.uri || "").split("/").pop();
-  return `https://bsky.app/profile/${post.author?.handle || CONFIG.BSKY_NEWS_HANDLE}/post/${rkey}`;
+  return `https://bsky.app/profile/${post.author?.handle || ""}/post/${rkey}`;
 }
 
 function renderNews(list) {
@@ -479,24 +488,16 @@ function renderNews(list) {
     <a class="news-card" href="${escHtml(n.link)}" target="_blank" rel="noopener">
       ${n.thumb ? `<div class="news-thumb" style="background-image:url('${escHtml(n.thumb)}')"></div>` : ""}
       <div class="news-body">
-        ${n.date ? `<span class="news-date">${escHtml(formatNewsDate(n.date))}</span>` : ""}
+        <div class="news-meta">
+          ${n.date ? `<span class="news-date">${escHtml(formatNewsDate(n.date))}</span>` : ""}
+          ${n.source ? `<span class="news-source">${escHtml(n.source)}</span>` : ""}
+        </div>
         <h3 class="news-title">${escHtml(n.title)}</h3>
         <p class="news-desc">${escHtml(truncateText(n.description, 160))}</p>
         <span class="news-cta">${currentLang === "en" ? "Read more →" : "Leer más →"}</span>
       </div>
     </a>
   `).join("");
-}
-
-function truncateText(str, len) {
-  if (!str) return "";
-  return str.length > len ? str.substring(0, len) + "…" : str;
-}
-
-function formatNewsDate(iso) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(currentLang === "en" ? "en-US" : "es-VE", { year: "numeric", month: "short", day: "numeric" });
 }
 
 // Load sample data when Sheet is not configured yet
