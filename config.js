@@ -16,13 +16,8 @@ const CONFIG = {
   DEFAULT_LANG: "es",
   REFRESH_INTERVAL_MS: 300000,
 
-  // Bluesky sources for the News tab (no API key needed, public feed)
-  // noFilter: true  → show all posts (use for accounts dedicated to earthquake coverage)
-  // noFilter: false → filter by earthquake keywords (use for general news accounts)
-  BSKY_NEWS_HANDLES: [
-    { handle: "noticiasvv.vzla.masto.host.ap.brid.gy",          noFilter: false },
-    { handle: "caracaschronicles.tierra-de-gracia.com",           noFilter: true  },
-  ],
+  // Bluesky handle to pull earthquake-related news from (no API key needed)
+  BSKY_NEWS_HANDLE: "noticiasvv.vzla.masto.host.ap.brid.gy",
 
   // Earthquake date — news pagination stops once it reaches posts older than this
   BSKY_NEWS_SINCE: "2026-06-20",
