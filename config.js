@@ -16,8 +16,16 @@ const CONFIG = {
   DEFAULT_LANG: "es",
   REFRESH_INTERVAL_MS: 300000,
 
-  // Bluesky handle to pull earthquake-related news from (no API key needed)
-  BSKY_NEWS_HANDLE: "noticiasvv.vzla.masto.host.ap.brid.gy",
+  // News sources for the News tab — no API keys needed.
+  // type: "bluesky" → public Bluesky API (handle required)
+  // type: "rss"     → RSS/Atom feed, proxied through rss2json.com to avoid CORS (url required)
+  // noFilter: true  → show all posts as-is (source already covers only the earthquake)
+  // noFilter: false → filter posts by earthquake keywords (source is general news)
+  NEWS_SOURCES: [
+    { type: "bluesky", handle: "noticiasvv.vzla.masto.host.ap.brid.gy", label: "Noticias VV", noFilter: false },
+    { type: "bluesky", handle: "caracaschronicles.tierra-de-gracia.com", label: "Caracas Chronicles", noFilter: true },
+    { type: "rss", url: "https://eldiario.com/etiqueta/terremotos-venezuela/feed/", label: "El Diario", noFilter: true },
+  ],
 
   // Earthquake date — news pagination stops once it reaches posts older than this
   BSKY_NEWS_SINCE: "2026-06-20",

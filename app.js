@@ -389,16 +389,63 @@ function isEarthquakeRelevant(text) {
 
 let allNews = [];
 
+async function fetchBlueskySource(source) {
+  const since = CONFIG.BSKY_NEWS_SINCE || "";
+  let feedItems = [];
+  let cursor = "";
+
+  for (let page = 0; page < BSKY_MAX_PAGES; page++) {
+    const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(source.handle)}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Network error fetching ${source.handle}`);
+    const data = await res.json();
+    const feed = data.feed || [];
+    if (feed.length === 0) break;
+
+    feedItems.push(...feed);
+
+    const oldestDate = feed[feed.length - 1]?.post?.record?.createdAt || "";
+    cursor = data.cursor || "";
+    if (!cursor || (since && oldestDate < since)) break;
+  }
+
+  return feedItems
+    .filter(item => !item.reason) // skip reposts, keep only the account's own posts
+    .map(item => item.post)
+    .filter(post => post && post.record)
+    .filter(post => !since || post.record.createdAt >= since)
+    .filter(post => source.noFilter || isEarthquakeRelevant(post.record.text))
+    .map(post => parseBlueskyPost(post, source));
+}
+
+async function fetchRssSource(source) {
+  const since = CONFIG.BSKY_NEWS_SINCE || "";
+  const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Network error fetching ${source.url}`);
+  const data = await res.json();
+  if (data.status !== "ok") throw new Error(`RSS error fetching ${source.url}`);
+
+  return (data.items || [])
+    .map(item => parseRssItem(item, source))
+    .filter(n => !since || n.date >= since)
+    .filter(n => source.noFilter || isEarthquakeRelevant(`${n.title} ${n.description}`));
+}
+
+function fetchNewsSource(source) {
+  return source.type === "rss" ? fetchRssSource(source) : fetchBlueskySource(source);
+}
+
 async function loadNews() {
   const status = document.getElementById("newsStatus");
   const grid = document.getElementById("newsGrid");
   if (!grid) return;
 
-  const handle = CONFIG.BSKY_NEWS_HANDLE;
-  if (!handle) {
+  const sources = CONFIG.NEWS_SOURCES || [];
+  if (!sources.length) {
     status.innerHTML = `<p class="config-warning">⚙️ ${currentLang === "en"
-      ? "To display news, add a Bluesky handle to <code>config.js</code>."
-      : "Para mostrar noticias, agrega un usuario de Bluesky en <code>config.js</code>."}</p>`;
+      ? "To display news, add sources to <code>config.js</code>."
+      : "Para mostrar noticias, agrega fuentes en <code>config.js</code>."}</p>`;
     return;
   }
 
@@ -406,32 +453,14 @@ async function loadNews() {
     status.classList.remove("hidden");
     status.innerHTML = `<div class="loading-spinner"></div><span>${currentLang === "en" ? "Loading news..." : "Cargando noticias..."}</span>`;
 
-    const since = CONFIG.BSKY_NEWS_SINCE || "";
-    let feedItems = [];
-    let cursor = "";
-
-    for (let page = 0; page < BSKY_MAX_PAGES; page++) {
-      const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Network error");
-      const data = await res.json();
-      const feed = data.feed || [];
-      if (feed.length === 0) break;
-
-      feedItems.push(...feed);
-
-      const oldestDate = feed[feed.length - 1]?.post?.record?.createdAt || "";
-      cursor = data.cursor || "";
-      if (!cursor || (since && oldestDate < since)) break;
-    }
-
-    allNews = feedItems
-      .filter(item => !item.reason) // skip reposts, keep only the account's own posts
-      .map(item => item.post)
-      .filter(post => post && post.record)
-      .filter(post => !since || post.record.createdAt >= since)
-      .filter(post => isEarthquakeRelevant(post.record.text))
-      .map(parseNewsPost);
+    const settled = await Promise.allSettled(sources.map(fetchNewsSource));
+    const combined = [];
+    settled.forEach((result, i) => {
+      if (result.status === "fulfilled") combined.push(...result.value);
+      else console.error(`Failed to load news source ${sources[i].handle || sources[i].url}:`, result.reason);
+    });
+    combined.sort((a, b) => b.date.localeCompare(a.date));
+    allNews = combined;
 
     status.classList.add("hidden");
     renderNews(allNews);
@@ -444,7 +473,7 @@ async function loadNews() {
   }
 }
 
-function parseNewsPost(post) {
+function parseBlueskyPost(post, source) {
   const record = post.record || {};
   const external = post.embed && post.embed.$type === "app.bsky.embed.external#view" ? post.embed.external : null;
 
@@ -454,12 +483,29 @@ function parseNewsPost(post) {
     thumb: external?.thumb || "",
     link: external?.uri || bskyPostUrl(post),
     date: record.createdAt || post.indexedAt || "",
+    source: source.label || "",
   };
 }
 
 function bskyPostUrl(post) {
   const rkey = (post.uri || "").split("/").pop();
-  return `https://bsky.app/profile/${post.author?.handle || CONFIG.BSKY_NEWS_HANDLE}/post/${rkey}`;
+  return `https://bsky.app/profile/${post.author?.handle || ""}/post/${rkey}`;
+}
+
+function parseRssItem(item, source) {
+  const date = item.pubDate ? new Date(item.pubDate.replace(" ", "T") + "Z").toISOString() : "";
+  return {
+    title: item.title || "",
+    description: stripHtml(item.description || ""),
+    thumb: item.thumbnail || "",
+    link: item.link || "",
+    date,
+    source: source.label || "",
+  };
+}
+
+function stripHtml(html) {
+  return html.replace(/<[^>]*>/g, "").trim();
 }
 
 function renderNews(list) {
@@ -479,7 +525,10 @@ function renderNews(list) {
     <a class="news-card" href="${escHtml(n.link)}" target="_blank" rel="noopener">
       ${n.thumb ? `<div class="news-thumb" style="background-image:url('${escHtml(n.thumb)}')"></div>` : ""}
       <div class="news-body">
-        ${n.date ? `<span class="news-date">${escHtml(formatNewsDate(n.date))}</span>` : ""}
+        <div class="news-meta">
+          ${n.date ? `<span class="news-date">${escHtml(formatNewsDate(n.date))}</span>` : ""}
+          ${n.source ? `<span class="news-source">${escHtml(n.source)}</span>` : ""}
+        </div>
         <h3 class="news-title">${escHtml(n.title)}</h3>
         <p class="news-desc">${escHtml(truncateText(n.description, 160))}</p>
         <span class="news-cta">${currentLang === "en" ? "Read more →" : "Leer más →"}</span>
